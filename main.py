@@ -62,6 +62,10 @@ class Player(object):
         self.stop_x = 450
         self.stop_y = 600
         self.stop_angle = 0
+        
+        # draw ending position
+        pygame.gfxdraw.aacircle(DISPLAYSURF, self.stop_x, self.stop_y, playerSize, WHITE)
+        pygame.gfxdraw.filled_circle(DISPLAYSURF, self.stop_x, self.stop_y, playerSize, WHITE)
     
     def move(self):
         # computes current movement
@@ -112,7 +116,8 @@ def rungame():
                 # checking if you collide and fail
                 if (player_t[i].x > WINWIDTH-125 or player_t[i].x < 3 or
                             player_t[i].y > WINHEIGHT-3 or player_t[i].y < 3 or
-                            DISPLAYSURF.get_at((player_t[i].x, player_t[i].y)) != BLACK):
+                            (DISPLAYSURF.get_at((player_t[i].x, player_t[i].y)) != BLACK and
+                             DISPLAYSURF.get_at((player_t[i].x, player_t[i].y)) != WHITE)):
                     player_t[i].running = False
                     players_running = 0
                     SCORE = LargePenalty
