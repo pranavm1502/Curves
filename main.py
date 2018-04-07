@@ -9,11 +9,13 @@ from menu import *
 from math import *
 from pygame.locals import *
 
-SPEED = 10       # frames per second setting
+SPEED = 2       # frames per second setting
 WINWIDTH = 1280  # width of the program's window, in pixels
 WINHEIGHT = 720  # height in pixels
-RADIUS = 5       # radius of the circles
+RADIUS = 10       # radius of the circles
 PLAYERS = 1      # number of players
+playerSize = 5 # size of player circle
+len_tol = 2
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -32,7 +34,7 @@ def main():
     FPS_CLOCK = pygame.time.Clock()
     SCREEN = pygame.display.set_mode((WINWIDTH, WINHEIGHT))
     DISPLAYSURF = pygame.Surface(SCREEN.get_size())
-    pygame.display.set_caption('FarBy!')
+    pygame.display.set_caption('Curves!')
     # pygame.mixer.music.load('test.mp3')
     # pygame.mixer.music.play(-1, 0.0)
     MY_FONT = pygame.font.SysFont('bauhaus93', 37)
@@ -48,45 +50,48 @@ class Player(object):
     def __init__(self):
         self.running = True
         self.colour = None
-        self.score = 0
+        self.length = 200 + 200
 
-    def gen(self):
-        # generates random position and direction
-        self.x = random.randrange(50, WINWIDTH - 165)
-        self.y = random.randrange(50, WINHEIGHT - 50)
-        self.angle = random.randrange(0, 360)
-
+    def start(self):
+        # start position and direction
+        self.x = 200 #random.randrange(50, WINWIDTH - 165)
+        self.y = 600 #random.randrange(50, WINHEIGHT - 50)
+        self.angle = 0 #random.randrange(0, 360)
+        
+        # stop position and direction
+        self.stop_x = 450
+        self.stop_y = 600
+        self.stop_angle = 0
+    
     def move(self):
         # computes current movement
-        self.x += int(RADIUS * 2 * cos(radians(self.angle)))
-        self.y += int(RADIUS * 2 * sin(radians(self.angle)))
+        self.x += int(RADIUS * cos(radians(self.angle)))
+        self.y += int(RADIUS * sin(radians(self.angle)))
 
     def draw(self):
         # drawing players
-        pygame.gfxdraw.aacircle(DISPLAYSURF, self.x, self.y, RADIUS, self.colour)
-        pygame.gfxdraw.filled_circle(DISPLAYSURF, self.x, self.y, RADIUS, self.colour)
+        pygame.gfxdraw.aacircle(DISPLAYSURF, self.x, self.y, playerSize, self.colour)
+        pygame.gfxdraw.filled_circle(DISPLAYSURF, self.x, self.y, playerSize, self.colour)
 
 
 def rungame():
-    global WINNER
+    global WINNER, SCORE
     DISPLAYSURF.fill(BLACK)
     pygame.draw.aaline(DISPLAYSURF, WHITE, (WINWIDTH-115, 0), (WINWIDTH-115, WINHEIGHT))
-    WINNER = []
+    WINNER = 0
     first = True
     run = True
     players_running = PLAYERS
-    if PLAYERS == 3:
-        max_score = 10
-    else:
-        max_score = 5
-
+    SCORE = 0
+    length = 0
+    largePenalty = -10
     # generating players
     player1 = Player()
     player2 = Player()
     player3 = Player()
     player_t = [player1, player2, player3]
     for i in range(PLAYERS):
-        player_t[i].gen()
+        player_t[i].start()
 
     while run:
         # checking how many players are needed running
@@ -98,57 +103,46 @@ def rungame():
         player2.colour = P2COLOUR
         player3.colour = P3COLOUR
 
-        # generating random holes
-        hole = random.randrange(1, 20)
-        if hole == 3:
-            player1.move()
-            player1.colour = BLACK
-        elif hole == 5:
-            player2.move()
-            player2.colour = BLACK
-        elif hole == 7 and PLAYERS == 3:
-            player3.move()
-            player3.colour = BLACK
-
+        length += 1
         for i in range(PLAYERS):  # loop for checking positions, drawing, moving and scoring for all players
-            if player_t[i].running and players_running > 1:
-                if player_t[i].angle < 0:
-                    player_t[i].angle += 360
-                elif player_t[i].angle >= 360:
-                    player_t[i].angle -= 360
-
-                # checking if someone fails
+            if player_t[i].running and players_running >= 1:
+                player_t[i].angle = player_t[i].angle % 360
+                player_t[i].move()
+                
+                # checking if you collide and fail
                 if (player_t[i].x > WINWIDTH-125 or player_t[i].x < 3 or
                             player_t[i].y > WINHEIGHT-3 or player_t[i].y < 3 or
                             DISPLAYSURF.get_at((player_t[i].x, player_t[i].y)) != BLACK):
                     player_t[i].running = False
+                    players_running = 0
+                    SCORE = LargePenalty
+                
+                # checking if the max length for this curve is reached
+                if length * RADIUS + len_tol >= player_t[i].length: 
+                    # note: the above condition might need to be modified if 
+                    # the integer rounding off errors mess thigns up
+                    player_t[i].running = False
                     players_running -= 1
-
-                    if i == 0:
-                        if player2.running:
-                            player2.score += 1
-                        if player3.running:
-                            player3.score += 1
-                    elif i == 1:
-                        if player1.running:
-                            player1.score += 1
-                        if player3.running:
-                            player3.score += 1
-                    elif i == 2:
-                        if player1.running:
-                            player1.score += 1
-                        if player2.running:
-                            player2.score += 1
-
+                    
+                    # check if the destination is correctly reached 
+                    if (abs(player_t[i].x - player_t[i].stop_x) <= len_tol and
+                        abs(player_t[i].y - player_t[i].stop_y) <= len_tol and
+                        player_t[i].angle == player_t[i].stop_angle):
+                        
+                        SCORE += 1
+                    else:
+                        SCORE -= 1
+                    
                 player_t[i].draw()
-                player_t[i].move()
+                              
 
         for event in pygame.event.get():
             if event.type == QUIT:
-                shutdown()
+                exit()
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    shutdown()
+                    exit()
+        
 
         # steering
         keys = pygame.key.get_pressed()
@@ -166,27 +160,24 @@ def rungame():
             player3.angle += 10
 
         # drawing scores
-        scoring(player1.score, player2.score, player3.score, P1COLOUR, P2COLOUR, P3COLOUR)
+        length_disp(length, [player1.x, player1.y, player1.angle], P1COLOUR)
 
         # drawing all on the screen
         SCREEN.blit(DISPLAYSURF, (0, 0))
         pygame.display.update()
 
-        # checking if someone reach max score and win
-        if players_running == 1:
-            if any(n >= max_score for n in (player1.score, player2.score, player3.score)):
-                run = False
-                for i in range(PLAYERS):
-                    if player_t[i].score == max(player1.score, player2.score, player3.score):
-                        WINNER.append(i + 1)
-                continue
+        # checking if someone reach max length and win
+        if players_running == 0:
+            if SCORE > 0:
+                WINNER = 1
+            run = False
             pygame.time.wait(1000)
-            DISPLAYSURF.fill(BLACK)
+#            DISPLAYSURF.fill(BLACK)
             pygame.draw.aaline(DISPLAYSURF, WHITE, (WINWIDTH-115, 0), (WINWIDTH-115, WINHEIGHT))
             first = True
             players_running = PLAYERS
             for i in range(PLAYERS):
-                player_t[i].gen()
+                player_t[i].start()
                 player_t[i].running = True
             continue
 
@@ -200,35 +191,31 @@ def rungame():
 def start_screen():
     # initializing menu, getting number of players after choosing game mode
     global PLAYERS
-    menu = Menu(['2 Players', '3 Players', 'Help', 'Exit'])
+    menu = Menu(['1 Player', '3 Players', 'Help', 'Exit'])
     menu.init(SCREEN)
     menu.draw()
     PLAYERS = menu.start()
 
 
-def scoring(play1score, play2score, play3score, colour1, colour2, colour3):
+def length_disp(length, xy, colour1):
     # drawing scores
     colour0 = WHITE
-    if PLAYERS == 2:
-        colour3 = BLACK
-    elif PLAYERS == 1:
-        colour3 = colour2 = colour1 = colour0 = BLACK
-    score_msg = MY_FONT.render("Score:", 1, colour0, BLACK)
-    score1_msg = MY_FONT.render("P1: " + str(play1score), 1, colour1, BLACK)
-    score2_msg = MY_FONT.render("P2: " + str(play2score), 1, colour2, BLACK)
-    score3_msg = MY_FONT.render("P3: " + str(play3score), 1, colour3, BLACK)
-    DISPLAYSURF.blit(score_msg, (WINWIDTH - 110, WINHEIGHT/10))
-    DISPLAYSURF.blit(score1_msg, (WINWIDTH - 108, WINHEIGHT/10 + 40))
-    DISPLAYSURF.blit(score2_msg, (WINWIDTH - 108, WINHEIGHT/10 + 80))
-    DISPLAYSURF.blit(score3_msg, (WINWIDTH - 108, WINHEIGHT/10 + 120))
+    len_msg = MY_FONT.render("L: " + str(length), 1, colour0, BLACK)
+    len1_msg = MY_FONT.render("x: " + str(xy[0]), 1, colour1, BLACK)
+    len2_msg = MY_FONT.render("y: " + str(xy[1]), 1, colour1, BLACK)
+    len3_msg = MY_FONT.render("a: " + str(xy[2]), 1, colour1, BLACK)
+    DISPLAYSURF.blit(len_msg, (WINWIDTH - 110, WINHEIGHT/10))
+    DISPLAYSURF.blit(len1_msg, (WINWIDTH - 108, WINHEIGHT/10 + 40))
+    DISPLAYSURF.blit(len2_msg, (WINWIDTH - 108, WINHEIGHT/10 + 80))
+    DISPLAYSURF.blit(len3_msg, (WINWIDTH - 108, WINHEIGHT/10 + 120))
 
 
 def gameover():
     # drawing winner/s and waiting for key press
-    if len(WINNER) == 1:
-        end_msg = "Player %d wins! Press button to go to main menu." % WINNER[0]
-    elif len(WINNER) == 2:
-        end_msg = "Players %d and %d ties! Press button to go to main menu." % (WINNER[0], WINNER[1])
+    if WINNER == 1:
+        end_msg = "Good job." 
+    else:
+        end_msg = "Try again. Your score is " + str(SCORE)
     end_msg_render = MY_FONT.render(end_msg, 1, WHITE, BLACK)
     SCREEN.blit(end_msg_render, ((WINWIDTH - MY_FONT.size(end_msg)[0]) / 2, WINHEIGHT/5))
     pygame.display.update()
@@ -236,10 +223,10 @@ def gameover():
     while end:
         for event in pygame.event.get():
             if event.type == QUIT:
-                shutdown()
+                exit()
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    shutdown()
+                    exit()
                 else:
                     end = False
         FPS_CLOCK.tick(10)

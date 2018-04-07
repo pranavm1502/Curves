@@ -75,7 +75,7 @@ class Menu(object):
                         if self.curr_position == self.fields_num - 1:
                             shutdown()
                         elif self.curr_position == 0:
-                            return 2
+                            return 1
                         elif self.curr_position == 1:
                             return 3
                     if event.key == K_UP:
