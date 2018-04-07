@@ -18,3 +18,6 @@ Player1 (RED): Left, Right (keys)
 Player2 (GREEN): a, s
 
 Player3 (BLUE): k, l
+
+**Win Example**
+![alt text](https://github.com/pranavm1502/Curves/blob/master/Win_example.png)
