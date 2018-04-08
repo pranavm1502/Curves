@@ -12,7 +12,7 @@ from pygame.locals import *
 SPEED = 2       # frames per second setting
 WINWIDTH = 1280  # width of the program's window, in pixels
 WINHEIGHT = 720  # height in pixels
-RADIUS = 10       # radius of the circles
+STEPSIZE = 10       # Stepsize of each move
 PLAYERS = 1      # number of players
 playerSize = 5 # size of player circle
 len_tol = 2
@@ -69,8 +69,8 @@ class Player(object):
     
     def move(self):
         # computes current movement
-        self.x += int(RADIUS * cos(radians(self.angle)))
-        self.y += int(RADIUS * sin(radians(self.angle)))
+        self.x += int(STEPSIZE * cos(radians(self.angle)))
+        self.y += int(STEPSIZE * sin(radians(self.angle)))
 
     def draw(self):
         # drawing players
@@ -123,7 +123,7 @@ def rungame():
                     SCORE = LargePenalty
                 
                 # checking if the max length for this curve is reached
-                if length * RADIUS + len_tol >= player_t[i].length: 
+                if length * STEPSIZE + len_tol >= player_t[i].length: 
                     # note: the above condition might need to be modified if 
                     # the integer rounding off errors mess thigns up
                     player_t[i].running = False
