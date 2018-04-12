@@ -9,7 +9,7 @@ from menu import *
 from math import *
 from pygame.locals import *
 
-SPEED = 2       # frames per second setting
+SPEED = 5       # frames per second setting
 WINWIDTH = 1280  # width of the program's window, in pixels
 WINHEIGHT = 720  # height in pixels
 STEPSIZE = 10       # Stepsize of each move
@@ -88,7 +88,7 @@ def rungame():
     players_running = PLAYERS
     SCORE = 0
     length = 0
-    largePenalty = -10
+    LargePenalty = -2
     # generating players
     player1 = Player()
     player2 = Player()
@@ -120,7 +120,7 @@ def rungame():
                              DISPLAYSURF.get_at((player_t[i].x, player_t[i].y)) != WHITE)):
                     player_t[i].running = False
                     players_running = 0
-                    SCORE = LargePenalty
+                    SCORE += LargePenalty
                 
                 # checking if the max length for this curve is reached
                 if length * STEPSIZE + len_tol >= player_t[i].length: 
